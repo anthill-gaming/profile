@@ -22,6 +22,8 @@ class ReplaceCommand(Command):
                help='Target path of json tree.'),
         Option('-u', '--users', dest='users', default=None,
                help='User id list separated by commas.'),
+        Option('-d', '--debug', dest='debug', action='store_true', default=False,
+               help='Is debug mode on.'),
     )
 
     @staticmethod
@@ -61,7 +63,7 @@ class ReplaceCommand(Command):
         return query.all()
 
     @staticmethod
-    def replace(profile: Profile, target: str, replaces: Dict[Any, Any]) -> None:
+    def replace(profile: Profile, target: str, replaces: Dict[Any, Any], debug: bool) -> None:
         """Apply all replace operations on profile payload."""
         matches = profile.find_payload(target, lambda x: x.value in replaces)
         for match in matches:
@@ -70,13 +72,13 @@ class ReplaceCommand(Command):
             profile.update_payload(match.full_path, new_value, commit=False)
         if matches:
             # finally commit changes to database
-            profile.save()
+            profile.save(commit=(not debug))
 
-    def run(self, file: str, target: str, users: Optional[str] = None) -> None:
+    def run(self, file: str, target: str, users: Optional[str], debug: bool) -> None:
         replaces = self.get_replaces(path=file)
         profiles = self.get_profiles(users=self.parse_users(users))
 
         with tqdm.tqdm(total=len(profiles), unit=' profile') as pb:
             for profile in profiles:
-                self.replace(profile, target, replaces)
+                self.replace(profile, target, replaces, debug)
                 pb.update()
