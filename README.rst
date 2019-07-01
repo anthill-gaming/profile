@@ -1,3 +1,4 @@
 Profile
 =============================================
-Manage user profiles
+Manage user profiles.
+Currently under heavy development.
